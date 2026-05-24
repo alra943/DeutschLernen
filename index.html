@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>🇩🇪 Tu Alemán Diario</title>
+  <link rel="manifest" href="./manifest.json"/>
+  <meta name="theme-color" content="#0f0c1a"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Deutsch"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f0c1a; overflow-x: hidden; }
+    ::-webkit-scrollbar { display: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+const CARDS = [
+  { id: 1, de: "Hallo, ich bin...", es: "Hola, soy...", category: "👋 Saludos" },
+  { id: 2, de: "Wie geht's?", es: "¿Cómo estás?", category: "👋 Saludos" },
+  { id: 3, de: "Mir geht's gut, danke!", es: "¡Estoy bien, gracias!", category: "👋 Saludos" },
+  { id: 4, de: "die Küche", es: "la cocina", category: "🍳 Cocina" },
+  { id: 5, de: "Ich koche heute", es: "Hoy cocino yo", category: "🍳 Cocina" },
+  { id: 6, de: "Schmeckt das gut?", es: "¿Está rico?", category: "🍳 Cocina" },
+  { id: 7, de: "Lecker!", es: "¡Delicioso!", category: "🍳 Cocina" },
+  { id: 8, de: "Ich koche... also essen wir Pizza.", es: "Cocino yo... o sea, comemos pizza.", category: "😄 Humor" },
+  { id: 9, de: "Wo ist der Bahnhof?", es: "¿Dónde está la estación?", category: "✈️ Viajes" },
+  { id: 10, de: "Ich möchte nach Berlin", es: "Quiero ir a Berlín", category: "✈️ Viajes" },
+  { id: 11, de: "Ein Ticket, bitte", es: "Un billete, por favor", category: "✈️ Viajes" },
+  { id: 12, de: "Ich vermisse dich", es: "Te echo de menos", category: "💬 Sentimientos" },
+  { id: 13, de: "Du machst mich glücklich", es: "Me haces feliz", category: "💬 Sentimientos" },
+  { id: 14, de: "Ich freue mich!", es: "¡Me alegra mucho!", category: "💬 Sentimientos" },
+  { id: 15, de: "Was kochst du heute?", es: "¿Qué cocinas hoy?", category: "🍳 Cocina" },
+  { id: 16, de: "Ich weiß nicht... vielleicht Nudeln.", es: "No sé... quizás pasta.", category: "😄 Humor" },
+  { id: 17, de: "Wieder Nudeln?!", es: "¿Otra vez pasta?!", category: "😄 Humor" },
+  { id: 18, de: "Ich lerne Deutsch für dich", es: "Estoy aprendiendo alemán por ti", category: "💬 Sentimientos" },
+];
+
+const CATEGORIES = ["Todas", "👋 Saludos", "🍳 Cocina", "✈️ Viajes", "💬 Sentimientos", "😄 Humor"];
+
+function speakText(text, onEnd) {
+  try {
+    const synth = window.speechSynthesis;
+    if (!synth) { onEnd && onEnd(); return; }
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "de-DE";
+    utter.rate = 0.82;
+    utter.onend = () => onEnd && onEnd();
+    utter.onerror = () => onEnd && onEnd();
+    synth.speak(utter);
+    setTimeout(() => onEnd && onEnd(), 6000);
+  } catch(e) { onEnd && onEnd(); }
+}
+
+function normalize(str) {
+  return str.toLowerCase()
+    .replace(/[.,!?¿¡]/g, "")
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+    .trim();
+}
+
+function scorePronounciation(expected, heard) {
+  const a = normalize(expected).split(" ");
+  const b = normalize(heard).split(" ");
+  const matches = a.filter(w => b.includes(w)).length;
+  return Math.round((matches / a.length) * 100);
+}
+
+function PronounceModal({ card, onClose }) {
+  const [status, setStatus] = useState("idle");
+  const [heard, setHeard] = useState("");
+  const [score, setScore] = useState(null);
+  const recognitionRef = useRef(null);
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const supported = !!SR;
+
+  const startListening = () => {
+    if (!SR) return;
+    setStatus("listening"); setHeard(""); setScore(null);
+    const r = new SR();
+    r.lang = "de-DE"; r.interimResults = false; r.maxAlternatives = 1;
+    r.onresult = (e) => {
+      const t = e.results[0][0].transcript;
+      setHeard(t); setScore(scorePronounciation(card.de, t)); setStatus("result");
+    };
+    r.onerror = () => setStatus("error");
+    recognitionRef.current = r;
+    r.start();
+  };
+
+  const feedback = score === null ? null
+    : score >= 80 ? { emoji: "🏆", text: "¡Excelente pronunciación!", color: "#40c878" }
+    : score >= 55 ? { emoji: "👍", text: "Bastante bien, sigue practicando", color: "#d4a853" }
+    : score >= 30 ? { emoji: "🔄", text: "¡Casi! Inténtalo de nuevo", color: "#e08060" }
+    : { emoji: "💪", text: "Escucha primero y repite despacio", color: "#e06060" };
+
+  function highlightWords(expected, heard) {
+    return expected.split(" ").map((word, i) => {
+      const match = normalize(heard).split(" ").includes(normalize(word));
+      return <span key={i} style={{ marginRight:"4px", color:match?"#40c878":"#e06060", fontWeight:match?"600":"400", textDecoration:match?"none":"underline dotted" }}>{word}</span>;
+    });
+  }
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", display:"flex", alignItems:"flex-end", justifyContent:"center", zIndex:100 }}
+      onClick={e => { if(e.target===e.currentTarget) onClose(); }}>
+      <div style={{ background:"linear-gradient(180deg,#1e1540,#120e2a)", borderRadius:"24px 24px 0 0", border:"1px solid #3a2f60", borderBottom:"none", padding:"28px 24px 44px", width:"100%", maxWidth:"480px", animation:"fadeIn 0.25s ease" }}>
+        <div style={{ width:"40px", height:"4px", background:"#3a2f60", borderRadius:"2px", margin:"0 auto 24px" }}/>
+        <div style={{ fontSize:"11px", letterSpacing:"3px", color:"#6040c0", textTransform:"uppercase", marginBottom:"8px" }}>Práctica de pronunciación</div>
+        <div style={{ fontSize:"20px", fontWeight:"bold", color:"#f5e6c0", marginBottom:"4px" }}>{card.de}</div>
+        <div style={{ fontSize:"13px", color:"#7a6a88", marginBottom:"24px" }}>{card.es}</div>
+        <div style={{ fontSize:"11px", color:"#a08060", letterSpacing:"2px", marginBottom:"8px" }}>1 · ESCUCHA PRIMERO</div>
+        <button onClick={() => speakText(card.de, ()=>{})} style={{ width:"100%", padding:"12px", background:"rgba(96,64,192,0.15)", border:"1px solid rgba(96,64,192,0.4)", borderRadius:"14px", color:"#a090e0", cursor:"pointer", fontSize:"14px", marginBottom:"20px" }}>
+          🔊 Escuchar pronunciación alemana
+        </button>
+        <div style={{ fontSize:"11px", color:"#a08060", letterSpacing:"2px", marginBottom:"8px" }}>2 · AHORA TÚ</div>
+        {!supported ? (
+          <div style={{ padding:"12px", background:"rgba(200,80,80,0.1)", border:"1px solid rgba(200,80,80,0.3)", borderRadius:"14px", color:"#e08080", fontSize:"13px", textAlign:"center" }}>
+            Abre en Chrome o Brave para usar el micrófono.
+          </div>
+        ) : status === "idle" || status === "error" ? (
+          <>
+            <button onClick={startListening} style={{ width:"100%", padding:"14px", background:"linear-gradient(135deg,#6040c0,#9060e0)", border:"none", borderRadius:"14px", color:"white", cursor:"pointer", fontSize:"15px", fontWeight:"600" }}>
+              🎤 Grabar mi pronunciación
+            </button>
+            {status==="error" && <div style={{ marginTop:"8px", fontSize:"12px", color:"#e08060", textAlign:"center" }}>No se pudo acceder al micrófono. Comprueba los permisos.</div>}
+          </>
+        ) : status === "listening" ? (
+          <button onClick={() => { recognitionRef.current && recognitionRef.current.stop(); setStatus("idle"); }}
+            style={{ width:"100%", padding:"14px", background:"rgba(200,60,60,0.2)", border:"1px solid rgba(200,60,60,0.5)", borderRadius:"14px", color:"#e06060", cursor:"pointer", fontSize:"15px", fontWeight:"600", animation:"pulse 1s infinite" }}>
+            ⏹ Escuchando... (toca para detener)
+          </button>
+        ) : null}
+        {status==="result" && score!==null && (
+          <div style={{ marginTop:"16px", background:"rgba(255,255,255,0.04)", border:`1px solid ${feedback.color}40`, borderRadius:"16px", padding:"16px" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"12px" }}>
+              <span style={{ fontSize:"28px" }}>{feedback.emoji}</span>
+              <div>
+                <div style={{ fontSize:"15px", fontWeight:"bold", color:feedback.color }}>{feedback.text}</div>
+                <div style={{ fontSize:"12px", color:"#7a6a88" }}>Coincidencia: {score}%</div>
+              </div>
+            </div>
+            <div style={{ fontSize:"12px", color:"#7a6a88", marginBottom:"4px" }}>Lo que se escuchó:</div>
+            <div style={{ fontSize:"14px", color:"#c0b0d0", fontStyle:"italic", marginBottom:"10px" }}>"{heard}"</div>
+            <div style={{ fontSize:"12px", color:"#7a6a88", marginBottom:"4px" }}>Comparación:</div>
+            <div style={{ fontSize:"15px", lineHeight:"1.8" }}>{highlightWords(card.de, heard)}</div>
+            <button onClick={startListening} style={{ marginTop:"14px", width:"100%", padding:"10px", background:"rgba(255,255,255,0.05)", border:"1px solid #3a2f60", borderRadius:"12px", color:"#a090e0", cursor:"pointer", fontSize:"13px" }}>
+              🔄 Intentar de nuevo
+            </button>
+          </div>
+        )}
+        <button onClick={onClose} style={{ marginTop:"16px", width:"100%", padding:"10px", background:"transparent", border:"1px solid #2a2040", borderRadius:"12px", color:"#5a4a70", cursor:"pointer", fontSize:"13px" }}>Cerrar</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [filter, setFilter] = useState("Todas");
+  const [deck, setDeck] = useState([]);
+  const [index, setIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [scores, setScores] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("deutsch-scores") || "{}"); } catch { return {}; }
+  });
+  const [view, setView] = useState("study");
+  const [speaking, setSpeaking] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [sessionDone, setSessionDone] = useState(false);
+  const [pronounceCard, setPronounceCard] = useState(null);
+
+  useEffect(() => {
+    try { localStorage.setItem("deutsch-scores", JSON.stringify(scores)); } catch {}
+  }, [scores]);
+
+  useEffect(() => {
+    const filtered = filter==="Todas" ? CARDS : CARDS.filter(c=>c.category===filter);
+    setDeck([...filtered].sort(()=>Math.random()-0.5));
+    setIndex(0); setFlipped(false); setSessionDone(false);
+  }, [filter]);
+
+  const current = deck[index];
+  const wellCount = Object.values(scores).filter(v=>v==="bien").length;
+  const progress = deck.length > 0 ? Math.round((index/deck.length)*100) : 0;
+
+  const handleSpeak = () => {
+    if (!current) return;
+    setSpeaking(true);
+    speakText(current.de, () => setSpeaking(false));
+  };
+
+  const handleFlip = () => {
+    setFlipped(f => !f);
+    if (!flipped && current) { setSpeaking(true); speakText(current.de, ()=>setSpeaking(false)); }
+  };
+
+  const handleScore = (val) => {
+    if (!current) return;
+    setScores(s => ({...s, [current.id]: val}));
+    if (val==="bien") setStreak(s=>s+1); else setStreak(0);
+    if (index+1>=deck.length) setSessionDone(true);
+    else { setIndex(i=>i+1); setFlipped(false); }
+  };
+
+  const restart = () => {
+    const filtered = filter==="Todas" ? CARDS : CARDS.filter(c=>c.category===filter);
+    const hard = filtered.filter(c=>scores[c.id]==="difícil"||!scores[c.id]);
+    setDeck([...(hard.length>0?hard:filtered)].sort(()=>Math.random()-0.5));
+    setIndex(0); setFlipped(false); setSessionDone(false);
+  };
+
+  const s = (extra={}) => ({ cursor:"pointer", border:"none", transition:"all 0.2s", ...extra });
+
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#0f0c1a,#1a1030,#0c1520)", fontFamily:"Georgia,serif", color:"#f0e8d0", overflowX:"hidden" }}>
+      {pronounceCard && <PronounceModal card={pronounceCard} onClose={()=>setPronounceCard(null)}/>}
+      <div style={{ padding:"24px 24px 0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <div>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#a08060", textTransform:"uppercase", marginBottom:"4px" }}>Deutsch lernen</div>
+          <div style={{ fontSize:"24px", fontWeight:"bold", color:"#f5e6c0" }}>🇩🇪 Tu alemán diario</div>
+        </div>
+        <div style={{ display:"flex", gap:"8px" }}>
+          {["study","progress"].map(v => (
+            <button key={v} onClick={()=>setView(v)} style={{ ...s(), padding:"8px 14px", borderRadius:"20px", border:"1px solid", borderColor:view===v?"#d4a853":"#3a3050", background:view===v?"#d4a853":"transparent", color:view===v?"#1a1030":"#a08060", fontSize:"12px", fontWeight:"600" }}>
+              {v==="study"?"📖 Estudiar":"📊 Progreso"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {streak>1 && <div style={{ margin:"12px 24px 0", display:"inline-block", background:"linear-gradient(90deg,#d4a853,#e8c878)", borderRadius:"20px", padding:"4px 14px", fontSize:"12px", fontWeight:"700", color:"#1a1030" }}>🔥 {streak} respuestas seguidas correctas</div>}
+
+      {view==="study" && (
+        <div style={{ padding:"20px 24px" }}>
+          <div style={{ display:"flex", gap:"8px", overflowX:"auto", paddingBottom:"8px", marginBottom:"20px" }}>
+            {CATEGORIES.map(cat => (
+              <button key={cat} onClick={()=>setFilter(cat)} style={{ ...s(), padding:"6px 14px", borderRadius:"16px", border:"1px solid", borderColor:filter===cat?"#d4a853":"#2a2040", background:filter===cat?"rgba(212,168,83,0.15)":"rgba(255,255,255,0.03)", color:filter===cat?"#d4a853":"#7a6a88", fontSize:"12px", whiteSpace:"nowrap" }}>{cat}</button>
+            ))}
+          </div>
+          <div style={{ marginBottom:"20px" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", fontSize:"11px", color:"#7a6a88", marginBottom:"6px" }}>
+              <span>{index} de {deck.length} tarjetas</span><span>{progress}%</span>
+            </div>
+            <div style={{ height:"4px", background:"#2a2040", borderRadius:"2px", overflow:"hidden" }}>
+              <div style={{ height:"100%", width:`${progress}%`, background:"linear-gradient(90deg,#6040c0,#d4a853)", borderRadius:"2px", transition:"width 0.4s ease" }}/>
+            </div>
+          </div>
+          {sessionDone ? (
+            <div style={{ textAlign:"center", padding:"48px 24px", background:"rgba(255,255,255,0.03)", borderRadius:"24px", border:"1px solid #2a2040" }}>
+              <div style={{ fontSize:"56px", marginBottom:"16px" }}>🎉</div>
+              <div style={{ fontSize:"22px", fontWeight:"bold", color:"#f5e6c0", marginBottom:"8px" }}>¡Sesión completada!</div>
+              <div style={{ fontSize:"14px", color:"#a08060", marginBottom:"24px" }}>{wellCount} de {deck.length} tarjetas bien respondidas</div>
+              <button onClick={restart} style={{ ...s(), padding:"14px 32px", background:"linear-gradient(135deg,#6040c0,#d4a853)", borderRadius:"24px", color:"white", fontSize:"15px", fontWeight:"bold" }}>
+                {wellCount<deck.length?"🔄 Repasar las difíciles":"✨ Otra ronda"}
+              </button>
+            </div>
+          ) : current ? (
+            <>
+              <div style={{ textAlign:"center", marginBottom:"12px" }}>
+                <span style={{ fontSize:"12px", color:"#a08060", background:"rgba(212,168,83,0.1)", padding:"4px 12px", borderRadius:"12px", border:"1px solid rgba(212,168,83,0.2)" }}>{current.category}</span>
+              </div>
+              <div onClick={handleFlip} style={{ cursor:"pointer", background:flipped?"linear-gradient(135deg,#1e1540,#2a1f50)":"linear-gradient(135deg,#1a1030,#251840)", border:`1px solid ${flipped?"#6040c0":"#2a2040"}`, borderRadius:"24px", padding:"40px 28px", textAlign:"center", minHeight:"200px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px", transition:"all 0.3s ease", boxShadow:flipped?"0 8px 40px rgba(96,64,192,0.3)":"0 4px 20px rgba(0,0,0,0.4)", marginBottom:"16px", userSelect:"none" }}>
+                {!flipped ? (
+                  <>
+                    <div style={{ fontSize:"13px", letterSpacing:"3px", color:"#6040c0", textTransform:"uppercase" }}>Alemán</div>
+                    <div style={{ fontSize:"24px", fontWeight:"bold", color:"#f5e6c0", lineHeight:1.3 }}>{current.de}</div>
+                    <div style={{ fontSize:"12px", color:"#4a3a60" }}>Toca para ver la traducción</div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize:"13px", letterSpacing:"3px", color:"#d4a853", textTransform:"uppercase" }}>Español</div>
+                    <div style={{ fontSize:"22px", color:"#f5e6c0", lineHeight:1.3 }}>{current.es}</div>
+                    <div style={{ fontSize:"13px", color:"#7a6a88", fontStyle:"italic" }}>{current.de}</div>
+                  </>
+                )}
+              </div>
+              <div style={{ display:"flex", gap:"10px", marginBottom:"16px" }}>
+                <button onClick={e=>{e.stopPropagation();handleSpeak();}} style={{ ...s(), flex:1, padding:"10px", background:speaking?"rgba(212,168,83,0.2)":"rgba(255,255,255,0.05)", border:`1px solid ${speaking?"#d4a853":"#3a3050"}`, borderRadius:"14px", color:speaking?"#d4a853":"#a08060", fontSize:"13px", display:"flex", alignItems:"center", justifyContent:"center", gap:"6px" }}>
+                  {speaking?"🔊 Escuchando...":"🔈 Escuchar"}
+                </button>
+                <button onClick={e=>{e.stopPropagation();setPronounceCard(current);}} style={{ ...s(), flex:1, padding:"10px", background:"rgba(96,64,192,0.12)", border:"1px solid rgba(96,64,192,0.35)", borderRadius:"14px", color:"#a090e0", fontSize:"13px", display:"flex", alignItems:"center", justifyContent:"center", gap:"6px" }}>
+                  🎤 Practicar
+                </button>
+              </div>
+              {flipped && (
+                <div style={{ display:"flex", gap:"12px" }}>
+                  <button onClick={()=>handleScore("difícil")} style={{ ...s(), flex:1, padding:"16px", background:"rgba(200,60,60,0.1)", border:"1px solid rgba(200,60,60,0.3)", borderRadius:"16px", color:"#e06060", fontSize:"15px", fontWeight:"600" }}>😅 Difícil</button>
+                  <button onClick={()=>handleScore("bien")} style={{ ...s(), flex:1, padding:"16px", background:"rgba(60,180,100,0.1)", border:"1px solid rgba(60,180,100,0.3)", borderRadius:"16px", color:"#60c878", fontSize:"15px", fontWeight:"600" }}>✅ Lo tengo</button>
+                </div>
+              )}
+            </>
+          ) : null}
+        </div>
+      )}
+
+      {view==="progress" && (
+        <div style={{ padding:"20px 24px" }}>
+          <div style={{ fontSize:"16px", fontWeight:"bold", color:"#f5e6c0", marginBottom:"20px" }}>Tu progreso global</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"12px", marginBottom:"24px" }}>
+            {[{label:"Total",value:CARDS.length,icon:"📚"},{label:"Dominadas",value:wellCount,icon:"✅"},{label:"A repasar",value:Object.values(scores).filter(v=>v==="difícil").length,icon:"🔄"}].map(stat=>(
+              <div key={stat.label} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid #2a2040", borderRadius:"16px", padding:"16px 12px", textAlign:"center" }}>
+                <div style={{ fontSize:"22px", marginBottom:"4px" }}>{stat.icon}</div>
+                <div style={{ fontSize:"24px", fontWeight:"bold", color:"#d4a853" }}>{stat.value}</div>
+                <div style={{ fontSize:"11px", color:"#7a6a88" }}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize:"13px", color:"#a08060", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"12px" }}>Por categoría</div>
+          {CATEGORIES.filter(c=>c!=="Todas").map(cat=>{
+            const cc=CARDS.filter(c=>c.category===cat);
+            const cd=cc.filter(c=>scores[c.id]==="bien").length;
+            const pct=Math.round((cd/cc.length)*100);
+            return (
+              <div key={cat} style={{ marginBottom:"14px" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:"13px", color:"#c0b0d0", marginBottom:"6px" }}><span>{cat}</span><span style={{ color:"#7a6a88" }}>{cd}/{cc.length}</span></div>
+                <div style={{ height:"6px", background:"#2a2040", borderRadius:"3px", overflow:"hidden" }}>
+                  <div style={{ height:"100%", width:`${pct}%`, background:pct===100?"linear-gradient(90deg,#40c878,#60e8a0)":"linear-gradient(90deg,#6040c0,#d4a853)", borderRadius:"3px", transition:"width 0.5s ease" }}/>
+                </div>
+              </div>
+            );
+          })}
+          <div style={{ fontSize:"13px", color:"#a08060", letterSpacing:"2px", textTransform:"uppercase", margin:"24px 0 12px" }}>Todas las frases</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+            {CARDS.map(card=>(
+              <div key={card.id} style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${scores[card.id]==="bien"?"rgba(60,180,100,0.3)":scores[card.id]==="difícil"?"rgba(200,60,60,0.2)":"#2a2040"}`, borderRadius:"12px", padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", gap:"10px" }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:"14px", color:"#f0e8d0", marginBottom:"2px" }}>{card.de}</div>
+                  <div style={{ fontSize:"12px", color:"#7a6a88" }}>{card.es}</div>
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+                  <button onClick={()=>speakText(card.de,()=>{})} style={{ ...s(), background:"transparent", fontSize:"16px", padding:"4px" }}>🔈</button>
+                  <button onClick={()=>setPronounceCard(card)} style={{ ...s(), background:"transparent", fontSize:"16px", padding:"4px" }}>🎤</button>
+                  <span style={{ fontSize:"16px" }}>{scores[card.id]==="bien"?"✅":scores[card.id]==="difícil"?"🔄":"⬜"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={()=>{ if(confirm("¿Borrar todo el progreso?")){ setScores({}); localStorage.removeItem("deutsch-scores"); }}} style={{ ...s(), marginTop:"24px", width:"100%", padding:"12px", background:"rgba(200,60,60,0.08)", border:"1px solid rgba(200,60,60,0.2)", borderRadius:"12px", color:"#c06060", fontSize:"13px" }}>
+            🗑 Reiniciar progreso
+          </button>
+        </div>
+      )}
+      <div style={{ height:"40px" }}/>
+    </div>
+  );
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
