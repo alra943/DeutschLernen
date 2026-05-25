@@ -25,28 +25,59 @@
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
 
-const CARDS = [
-  { id: 1, de: "Hallo, ich bin...", es: "Hola, soy...", category: "👋 Saludos" },
-  { id: 2, de: "Wie geht's?", es: "¿Cómo estás?", category: "👋 Saludos" },
-  { id: 3, de: "Mir geht's gut, danke!", es: "¡Estoy bien, gracias!", category: "👋 Saludos" },
-  { id: 4, de: "die Küche", es: "la cocina", category: "🍳 Cocina" },
-  { id: 5, de: "Ich koche heute", es: "Hoy cocino yo", category: "🍳 Cocina" },
-  { id: 6, de: "Schmeckt das gut?", es: "¿Está rico?", category: "🍳 Cocina" },
-  { id: 7, de: "Lecker!", es: "¡Delicioso!", category: "🍳 Cocina" },
-  { id: 8, de: "Ich koche... also essen wir Pizza.", es: "Cocino yo... o sea, comemos pizza.", category: "😄 Humor" },
-  { id: 9, de: "Wo ist der Bahnhof?", es: "¿Dónde está la estación?", category: "✈️ Viajes" },
-  { id: 10, de: "Ich möchte nach Berlin", es: "Quiero ir a Berlín", category: "✈️ Viajes" },
-  { id: 11, de: "Ein Ticket, bitte", es: "Un billete, por favor", category: "✈️ Viajes" },
-  { id: 12, de: "Ich vermisse dich", es: "Te echo de menos", category: "💬 Sentimientos" },
-  { id: 13, de: "Du machst mich glücklich", es: "Me haces feliz", category: "💬 Sentimientos" },
-  { id: 14, de: "Ich freue mich!", es: "¡Me alegra mucho!", category: "💬 Sentimientos" },
-  { id: 15, de: "Was kochst du heute?", es: "¿Qué cocinas hoy?", category: "🍳 Cocina" },
-  { id: 16, de: "Ich weiß nicht... vielleicht Nudeln.", es: "No sé... quizás pasta.", category: "😄 Humor" },
-  { id: 17, de: "Wieder Nudeln?!", es: "¿Otra vez pasta?!", category: "😄 Humor" },
-  { id: 18, de: "Ich lerne Deutsch für dich", es: "Estoy aprendiendo alemán por ti", category: "💬 Sentimientos" },
+const ALL_CARDS = [
+  // Semana 1
+  { id: 1, de: "Hallo, ich bin...", es: "Hola, soy...", category: "👋 Saludos", semana: 1 },
+  { id: 2, de: "Wie geht's?", es: "¿Cómo estás?", category: "👋 Saludos", semana: 1 },
+  { id: 3, de: "Mir geht's gut, danke!", es: "¡Estoy bien, gracias!", category: "👋 Saludos", semana: 1 },
+  { id: 4, de: "die Küche", es: "la cocina", category: "🍳 Cocina", semana: 1 },
+  { id: 5, de: "Ich koche heute", es: "Hoy cocino yo", category: "🍳 Cocina", semana: 1 },
+  { id: 6, de: "Schmeckt das gut?", es: "¿Está rico?", category: "🍳 Cocina", semana: 1 },
+  { id: 7, de: "Lecker!", es: "¡Delicioso!", category: "🍳 Cocina", semana: 1 },
+  { id: 8, de: "Ich koche... also essen wir Pizza.", es: "Cocino yo... o sea, comemos pizza.", category: "😄 Humor", semana: 1 },
+  { id: 9, de: "Wo ist der Bahnhof?", es: "¿Dónde está la estación?", category: "✈️ Viajes", semana: 1 },
+  { id: 10, de: "Ich möchte nach Berlin", es: "Quiero ir a Berlín", category: "✈️ Viajes", semana: 1 },
+  { id: 11, de: "Ein Ticket, bitte", es: "Un billete, por favor", category: "✈️ Viajes", semana: 1 },
+  { id: 12, de: "Ich vermisse dich", es: "Te echo de menos", category: "💬 Sentimientos", semana: 1 },
+  { id: 13, de: "Du machst mich glücklich", es: "Me haces feliz", category: "💬 Sentimientos", semana: 1 },
+  { id: 14, de: "Ich freue mich!", es: "¡Me alegra mucho!", category: "💬 Sentimientos", semana: 1 },
+  { id: 15, de: "Was kochst du heute?", es: "¿Qué cocinas hoy?", category: "🍳 Cocina", semana: 1 },
+  { id: 16, de: "Ich weiß nicht... vielleicht Nudeln.", es: "No sé... quizás pasta.", category: "😄 Humor", semana: 1 },
+  { id: 17, de: "Wieder Nudeln?!", es: "¿Otra vez pasta?!", category: "😄 Humor", semana: 1 },
+  { id: 18, de: "Ich lerne Deutsch für dich", es: "Estoy aprendiendo alemán por ti", category: "💬 Sentimientos", semana: 1 },
+  // Semana 2
+  { id: 19, de: "Ich habe Hunger", es: "Tengo hambre", category: "🍳 Cocina", semana: 2 },
+  { id: 20, de: "Das riecht gut!", es: "¡Huele bien!", category: "🍳 Cocina", semana: 2 },
+  { id: 21, de: "Kannst du mir das Rezept geben?", es: "¿Me puedes dar la receta?", category: "🍳 Cocina", semana: 2 },
+  { id: 22, de: "Ich esse gerne Schokolade", es: "Me gusta comer chocolate", category: "🍳 Cocina", semana: 2 },
+  { id: 23, de: "Wie ist das Wetter heute?", es: "¿Qué tiempo hace hoy?", category: "🌤 Clima", semana: 2 },
+  { id: 24, de: "Es ist sonnig", es: "Hace sol", category: "🌤 Clima", semana: 2 },
+  { id: 25, de: "Es regnet", es: "Está lloviendo", category: "🌤 Clima", semana: 2 },
+  { id: 26, de: "Es ist kalt heute", es: "Hoy hace frío", category: "🌤 Clima", semana: 2 },
+  { id: 27, de: "Ich mag den Schnee!", es: "¡Me gusta la nieve!", category: "🌤 Clima", semana: 2 },
+  { id: 28, de: "Das ist meine Familie", es: "Esta es mi familia", category: "👨‍👩‍👧 Familia", semana: 2 },
+  { id: 29, de: "Meine Mutter kocht sehr gut", es: "Mi madre cocina muy bien", category: "👨‍👩‍👧 Familia", semana: 2 },
+  { id: 30, de: "Wie viele Geschwister hast du?", es: "¿Cuántos hermanos tienes?", category: "👨‍👩‍👧 Familia", semana: 2 },
+  { id: 31, de: "Ich habe einen Bruder", es: "Tengo un hermano", category: "👨‍👩‍👧 Familia", semana: 2 },
+  { id: 32, de: "Mein Vater ist sehr lustig", es: "Mi padre es muy gracioso", category: "👨‍👩‍👧 Familia", semana: 2 },
+  { id: 33, de: "Ich stehe um sieben Uhr auf", es: "Me levanto a las siete", category: "🏠 Día a día", semana: 2 },
+  { id: 34, de: "Ich bin müde", es: "Estoy cansado/a", category: "🏠 Día a día", semana: 2 },
+  { id: 35, de: "Guten Morgen!", es: "¡Buenos días!", category: "🏠 Día a día", semana: 2 },
+  { id: 36, de: "Gute Nacht!", es: "¡Buenas noches!", category: "🏠 Día a día", semana: 2 },
+  { id: 37, de: "Ich gehe jetzt schlafen", es: "Me voy a dormir ahora", category: "🏠 Día a día", semana: 2 },
+  { id: 38, de: "Ich verstehe nicht", es: "No entiendo", category: "🃏 Comodines", semana: 2 },
+  { id: 39, de: "Kannst du das wiederholen?", es: "¿Puedes repetirlo?", category: "🃏 Comodines", semana: 2 },
+  { id: 40, de: "Wie sagt man das auf Deutsch?", es: "¿Cómo se dice eso en alemán?", category: "🃏 Comodines", semana: 2 },
+  { id: 41, de: "Wirklich?!", es: "¿En serio?!", category: "😄 Humor", semana: 2 },
+  { id: 42, de: "Das ist verrückt!", es: "¡Esto es una locura!", category: "😄 Humor", semana: 2 },
+  { id: 43, de: "Kein Problem!", es: "¡Sin problema!", category: "🃏 Comodines", semana: 2 },
 ];
 
-const CATEGORIES = ["Todas", "👋 Saludos", "🍳 Cocina", "✈️ Viajes", "💬 Sentimientos", "😄 Humor"];
+const SEMANAS = [1, 2];
+const CATEGORIES_BY_SEMANA = {
+  1: ["Todas", "👋 Saludos", "🍳 Cocina", "✈️ Viajes", "💬 Sentimientos", "😄 Humor"],
+  2: ["Todas", "🍳 Cocina", "🌤 Clima", "👨‍👩‍👧 Familia", "🏠 Día a día", "🃏 Comodines", "😄 Humor"],
+};
 
 function speakText(text, onEnd) {
   try {
@@ -167,6 +198,7 @@ function PronounceModal({ card, onClose }) {
 }
 
 function App() {
+  const [semana, setSemana] = useState(1);
   const [filter, setFilter] = useState("Todas");
   const [deck, setDeck] = useState([]);
   const [index, setIndex] = useState(0);
@@ -185,13 +217,20 @@ function App() {
   }, [scores]);
 
   useEffect(() => {
-    const filtered = filter==="Todas" ? CARDS : CARDS.filter(c=>c.category===filter);
+    setFilter("Todas");
+  }, [semana]);
+
+  useEffect(() => {
+    const semanaCards = ALL_CARDS.filter(c=>c.semana===semana);
+    const filtered = filter==="Todas" ? semanaCards : semanaCards.filter(c=>c.category===filter);
     setDeck([...filtered].sort(()=>Math.random()-0.5));
     setIndex(0); setFlipped(false); setSessionDone(false);
-  }, [filter]);
+  }, [filter, semana]);
 
   const current = deck[index];
-  const wellCount = Object.values(scores).filter(v=>v==="bien").length;
+  const CATEGORIES = CATEGORIES_BY_SEMANA[semana] || ["Todas"];
+  const semanaCards = ALL_CARDS.filter(c=>c.semana===semana);
+  const wellCount = semanaCards.filter(c=>scores[c.id]==="bien").length;
   const progress = deck.length > 0 ? Math.round((index/deck.length)*100) : 0;
 
   const handleSpeak = () => {
@@ -214,13 +253,14 @@ function App() {
   };
 
   const restart = () => {
-    const filtered = filter==="Todas" ? CARDS : CARDS.filter(c=>c.category===filter);
+    const semanaCards = ALL_CARDS.filter(c=>c.semana===semana);
+    const filtered = filter==="Todas" ? semanaCards : semanaCards.filter(c=>c.category===filter);
     const hard = filtered.filter(c=>scores[c.id]==="difícil"||!scores[c.id]);
     setDeck([...(hard.length>0?hard:filtered)].sort(()=>Math.random()-0.5));
     setIndex(0); setFlipped(false); setSessionDone(false);
   };
 
-  const s = (extra={}) => ({ cursor:"pointer", border:"none", transition:"all 0.2s", ...extra });
+  const btn = (extra={}) => ({ cursor:"pointer", border:"none", transition:"all 0.2s", ...extra });
 
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#0f0c1a,#1a1030,#0c1520)", fontFamily:"Georgia,serif", color:"#f0e8d0", overflowX:"hidden" }}>
@@ -232,7 +272,7 @@ function App() {
         </div>
         <div style={{ display:"flex", gap:"8px" }}>
           {["study","progress"].map(v => (
-            <button key={v} onClick={()=>setView(v)} style={{ ...s(), padding:"8px 14px", borderRadius:"20px", border:"1px solid", borderColor:view===v?"#d4a853":"#3a3050", background:view===v?"#d4a853":"transparent", color:view===v?"#1a1030":"#a08060", fontSize:"12px", fontWeight:"600" }}>
+            <button key={v} onClick={()=>setView(v)} style={{ ...btn(), padding:"8px 14px", borderRadius:"20px", border:"1px solid", borderColor:view===v?"#d4a853":"#3a3050", background:view===v?"#d4a853":"transparent", color:view===v?"#1a1030":"#a08060", fontSize:"12px", fontWeight:"600" }}>
               {v==="study"?"📖 Estudiar":"📊 Progreso"}
             </button>
           ))}
@@ -243,9 +283,16 @@ function App() {
 
       {view==="study" && (
         <div style={{ padding:"20px 24px" }}>
+          <div style={{ display:"flex", gap:"8px", marginBottom:"14px" }}>
+            {SEMANAS.map(s => (
+              <button key={s} onClick={()=>setSemana(s)} style={{ ...btn(), flex:1, padding:"10px", borderRadius:"14px", border:"1px solid", borderColor:semana===s?"#d4a853":"#2a2040", background:semana===s?"rgba(212,168,83,0.15)":"rgba(255,255,255,0.03)", color:semana===s?"#d4a853":"#7a6a88", fontSize:"13px", fontWeight:semana===s?"600":"400" }}>
+                Semana {s} {s===1?"🌱":"🌿"}
+              </button>
+            ))}
+          </div>
           <div style={{ display:"flex", gap:"8px", overflowX:"auto", paddingBottom:"8px", marginBottom:"20px" }}>
             {CATEGORIES.map(cat => (
-              <button key={cat} onClick={()=>setFilter(cat)} style={{ ...s(), padding:"6px 14px", borderRadius:"16px", border:"1px solid", borderColor:filter===cat?"#d4a853":"#2a2040", background:filter===cat?"rgba(212,168,83,0.15)":"rgba(255,255,255,0.03)", color:filter===cat?"#d4a853":"#7a6a88", fontSize:"12px", whiteSpace:"nowrap" }}>{cat}</button>
+              <button key={cat} onClick={()=>setFilter(cat)} style={{ ...btn(), padding:"6px 14px", borderRadius:"16px", border:"1px solid", borderColor:filter===cat?"#d4a853":"#2a2040", background:filter===cat?"rgba(212,168,83,0.15)":"rgba(255,255,255,0.03)", color:filter===cat?"#d4a853":"#7a6a88", fontSize:"12px", whiteSpace:"nowrap" }}>{cat}</button>
             ))}
           </div>
           <div style={{ marginBottom:"20px" }}>
@@ -261,7 +308,7 @@ function App() {
               <div style={{ fontSize:"56px", marginBottom:"16px" }}>🎉</div>
               <div style={{ fontSize:"22px", fontWeight:"bold", color:"#f5e6c0", marginBottom:"8px" }}>¡Sesión completada!</div>
               <div style={{ fontSize:"14px", color:"#a08060", marginBottom:"24px" }}>{wellCount} de {deck.length} tarjetas bien respondidas</div>
-              <button onClick={restart} style={{ ...s(), padding:"14px 32px", background:"linear-gradient(135deg,#6040c0,#d4a853)", borderRadius:"24px", color:"white", fontSize:"15px", fontWeight:"bold" }}>
+              <button onClick={restart} style={{ ...btn(), padding:"14px 32px", background:"linear-gradient(135deg,#6040c0,#d4a853)", borderRadius:"24px", color:"white", fontSize:"15px", fontWeight:"bold" }}>
                 {wellCount<deck.length?"🔄 Repasar las difíciles":"✨ Otra ronda"}
               </button>
             </div>
@@ -286,17 +333,17 @@ function App() {
                 )}
               </div>
               <div style={{ display:"flex", gap:"10px", marginBottom:"16px" }}>
-                <button onClick={e=>{e.stopPropagation();handleSpeak();}} style={{ ...s(), flex:1, padding:"10px", background:speaking?"rgba(212,168,83,0.2)":"rgba(255,255,255,0.05)", border:`1px solid ${speaking?"#d4a853":"#3a3050"}`, borderRadius:"14px", color:speaking?"#d4a853":"#a08060", fontSize:"13px", display:"flex", alignItems:"center", justifyContent:"center", gap:"6px" }}>
+                <button onClick={e=>{e.stopPropagation();handleSpeak();}} style={{ ...btn(), flex:1, padding:"10px", background:speaking?"rgba(212,168,83,0.2)":"rgba(255,255,255,0.05)", border:`1px solid ${speaking?"#d4a853":"#3a3050"}`, borderRadius:"14px", color:speaking?"#d4a853":"#a08060", fontSize:"13px", display:"flex", alignItems:"center", justifyContent:"center", gap:"6px" }}>
                   {speaking?"🔊 Escuchando...":"🔈 Escuchar"}
                 </button>
-                <button onClick={e=>{e.stopPropagation();setPronounceCard(current);}} style={{ ...s(), flex:1, padding:"10px", background:"rgba(96,64,192,0.12)", border:"1px solid rgba(96,64,192,0.35)", borderRadius:"14px", color:"#a090e0", fontSize:"13px", display:"flex", alignItems:"center", justifyContent:"center", gap:"6px" }}>
+                <button onClick={e=>{e.stopPropagation();setPronounceCard(current);}} style={{ ...btn(), flex:1, padding:"10px", background:"rgba(96,64,192,0.12)", border:"1px solid rgba(96,64,192,0.35)", borderRadius:"14px", color:"#a090e0", fontSize:"13px", display:"flex", alignItems:"center", justifyContent:"center", gap:"6px" }}>
                   🎤 Practicar
                 </button>
               </div>
               {flipped && (
                 <div style={{ display:"flex", gap:"12px" }}>
-                  <button onClick={()=>handleScore("difícil")} style={{ ...s(), flex:1, padding:"16px", background:"rgba(200,60,60,0.1)", border:"1px solid rgba(200,60,60,0.3)", borderRadius:"16px", color:"#e06060", fontSize:"15px", fontWeight:"600" }}>😅 Difícil</button>
-                  <button onClick={()=>handleScore("bien")} style={{ ...s(), flex:1, padding:"16px", background:"rgba(60,180,100,0.1)", border:"1px solid rgba(60,180,100,0.3)", borderRadius:"16px", color:"#60c878", fontSize:"15px", fontWeight:"600" }}>✅ Lo tengo</button>
+                  <button onClick={()=>handleScore("difícil")} style={{ ...btn(), flex:1, padding:"16px", background:"rgba(200,60,60,0.1)", border:"1px solid rgba(200,60,60,0.3)", borderRadius:"16px", color:"#e06060", fontSize:"15px", fontWeight:"600" }}>😅 Difícil</button>
+                  <button onClick={()=>handleScore("bien")} style={{ ...btn(), flex:1, padding:"16px", background:"rgba(60,180,100,0.1)", border:"1px solid rgba(60,180,100,0.3)", borderRadius:"16px", color:"#60c878", fontSize:"15px", fontWeight:"600" }}>✅ Lo tengo</button>
                 </div>
               )}
             </>
@@ -308,7 +355,7 @@ function App() {
         <div style={{ padding:"20px 24px" }}>
           <div style={{ fontSize:"16px", fontWeight:"bold", color:"#f5e6c0", marginBottom:"20px" }}>Tu progreso global</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"12px", marginBottom:"24px" }}>
-            {[{label:"Total",value:CARDS.length,icon:"📚"},{label:"Dominadas",value:wellCount,icon:"✅"},{label:"A repasar",value:Object.values(scores).filter(v=>v==="difícil").length,icon:"🔄"}].map(stat=>(
+            {[{label:"Total",value:semanaCards.length,icon:"📚"},{label:"Dominadas",value:wellCount,icon:"✅"},{label:"A repasar",value:semanaCards.filter(c=>scores[c.id]==="difícil").length,icon:"🔄"}].map(stat=>(
               <div key={stat.label} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid #2a2040", borderRadius:"16px", padding:"16px 12px", textAlign:"center" }}>
                 <div style={{ fontSize:"22px", marginBottom:"4px" }}>{stat.icon}</div>
                 <div style={{ fontSize:"24px", fontWeight:"bold", color:"#d4a853" }}>{stat.value}</div>
@@ -318,7 +365,7 @@ function App() {
           </div>
           <div style={{ fontSize:"13px", color:"#a08060", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"12px" }}>Por categoría</div>
           {CATEGORIES.filter(c=>c!=="Todas").map(cat=>{
-            const cc=CARDS.filter(c=>c.category===cat);
+            const cc=semanaCards.filter(c=>c.category===cat);
             const cd=cc.filter(c=>scores[c.id]==="bien").length;
             const pct=Math.round((cd/cc.length)*100);
             return (
@@ -332,21 +379,21 @@ function App() {
           })}
           <div style={{ fontSize:"13px", color:"#a08060", letterSpacing:"2px", textTransform:"uppercase", margin:"24px 0 12px" }}>Todas las frases</div>
           <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
-            {CARDS.map(card=>(
+            {semanaCards.map(card=>(
               <div key={card.id} style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${scores[card.id]==="bien"?"rgba(60,180,100,0.3)":scores[card.id]==="difícil"?"rgba(200,60,60,0.2)":"#2a2040"}`, borderRadius:"12px", padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", gap:"10px" }}>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:"14px", color:"#f0e8d0", marginBottom:"2px" }}>{card.de}</div>
                   <div style={{ fontSize:"12px", color:"#7a6a88" }}>{card.es}</div>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
-                  <button onClick={()=>speakText(card.de,()=>{})} style={{ ...s(), background:"transparent", fontSize:"16px", padding:"4px" }}>🔈</button>
-                  <button onClick={()=>setPronounceCard(card)} style={{ ...s(), background:"transparent", fontSize:"16px", padding:"4px" }}>🎤</button>
+                  <button onClick={()=>speakText(card.de,()=>{})} style={{ ...btn(), background:"transparent", fontSize:"16px", padding:"4px" }}>🔈</button>
+                  <button onClick={()=>setPronounceCard(card)} style={{ ...btn(), background:"transparent", fontSize:"16px", padding:"4px" }}>🎤</button>
                   <span style={{ fontSize:"16px" }}>{scores[card.id]==="bien"?"✅":scores[card.id]==="difícil"?"🔄":"⬜"}</span>
                 </div>
               </div>
             ))}
           </div>
-          <button onClick={()=>{ if(confirm("¿Borrar todo el progreso?")){ setScores({}); localStorage.removeItem("deutsch-scores"); }}} style={{ ...s(), marginTop:"24px", width:"100%", padding:"12px", background:"rgba(200,60,60,0.08)", border:"1px solid rgba(200,60,60,0.2)", borderRadius:"12px", color:"#c06060", fontSize:"13px" }}>
+          <button onClick={()=>{ if(confirm("¿Borrar todo el progreso?")){ setScores({}); localStorage.removeItem("deutsch-scores"); }}} style={{ ...btn(), marginTop:"24px", width:"100%", padding:"12px", background:"rgba(200,60,60,0.08)", border:"1px solid rgba(200,60,60,0.2)", borderRadius:"12px", color:"#c06060", fontSize:"13px" }}>
             🗑 Reiniciar progreso
           </button>
         </div>
