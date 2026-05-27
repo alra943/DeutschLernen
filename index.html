@@ -86,7 +86,20 @@ function speakText(text, onEnd) {
     synth.cancel();
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "de-DE";
-    utter.rate = 0.82;
+    // Prosody by sentence type
+    if (text.trim().endsWith("?")) {
+      utter.pitch = 1.35; // Rising tone for questions
+      utter.rate  = 0.78;
+    } else if (text.trim().endsWith("!")) {
+      utter.pitch = 1.20; // Energetic for exclamations
+      utter.rate  = 0.92;
+    } else if (text.includes("...")) {
+      utter.pitch = 0.95; // Trailing off for ellipsis
+      utter.rate  = 0.72;
+    } else {
+      utter.pitch = 1.05; // Neutral statements
+      utter.rate  = 0.82;
+    }
     utter.onend = () => onEnd && onEnd();
     utter.onerror = () => onEnd && onEnd();
     synth.speak(utter);
