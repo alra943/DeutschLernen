@@ -71,12 +71,38 @@ const ALL_CARDS = [
   { id: 41, de: "Wirklich?!", es: "¿En serio?!", category: "😄 Humor", semana: 2 },
   { id: 42, de: "Das ist verrückt!", es: "¡Esto es una locura!", category: "😄 Humor", semana: 2 },
   { id: 43, de: "Kein Problem!", es: "¡Sin problema!", category: "🃏 Comodines", semana: 2 },
+  // Semana 3
+  { id: 44, de: "Eins, zwei, drei, vier, fünf", es: "Uno, dos, tres, cuatro, cinco", category: "🔢 Números", semana: 3 },
+  { id: 45, de: "Sechs, sieben, acht, neun, zehn", es: "Seis, siete, ocho, nueve, diez", category: "🔢 Números", semana: 3 },
+  { id: 46, de: "Zwanzig, dreißig, hundert", es: "Veinte, treinta, cien", category: "🔢 Números", semana: 3 },
+  { id: 47, de: "Einundzwanzig", es: "Veintiuno (literal: uno-y-veinte)", category: "🔢 Números", semana: 3 },
+  { id: 48, de: "Wie alt bist du?", es: "¿Cuántos años tienes?", category: "🔢 Números", semana: 3 },
+  { id: 49, de: "Meine Telefonnummer ist...", es: "Mi número de teléfono es...", category: "🔢 Números", semana: 3 },
+  { id: 50, de: "Wie spät ist es?", es: "¿Qué hora es?", category: "🕐 Hora", semana: 3 },
+  { id: 51, de: "Es ist drei Uhr", es: "Son las tres", category: "🕐 Hora", semana: 3 },
+  { id: 52, de: "Es ist Viertel nach zwei", es: "Son las dos y cuarto", category: "🕐 Hora", semana: 3 },
+  { id: 53, de: "Es ist halb acht", es: "Son las siete y media (¡media hacia las ocho!)", category: "🕐 Hora", semana: 3 },
+  { id: 54, de: "Um wie viel Uhr essen wir?", es: "¿A qué hora comemos?", category: "🕐 Hora", semana: 3 },
+  { id: 55, de: "Ich komme um sechs", es: "Llego a las seis", category: "🕐 Hora", semana: 3 },
+  { id: 56, de: "Bis morgen!", es: "¡Hasta mañana!", category: "🕐 Hora", semana: 3 },
+  { id: 57, de: "Was kostet das?", es: "¿Cuánto cuesta esto?", category: "🛒 Compras", semana: 3 },
+  { id: 58, de: "Das ist zu teuer", es: "Es demasiado caro", category: "🛒 Compras", semana: 3 },
+  { id: 59, de: "Ich nehme das", es: "Me lo llevo", category: "🛒 Compras", semana: 3 },
+  { id: 60, de: "Kann ich mit Karte zahlen?", es: "¿Puedo pagar con tarjeta?", category: "🛒 Compras", semana: 3 },
+  { id: 61, de: "Eine Tüte, bitte", es: "Una bolsa, por favor", category: "🛒 Compras", semana: 3 },
+  { id: 62, de: "Ich brauche Milch und Brot", es: "Necesito leche y pan", category: "🛒 Compras", semana: 3 },
+  { id: 63, de: "Ich schaue nur", es: "Solo estoy mirando", category: "🛒 Compras", semana: 3 },
+  { id: 64, de: "Zahlen, bitte!", es: "¡La cuenta, por favor!", category: "🛒 Compras", semana: 3 },
+  { id: 65, de: "Halb acht? Das ist doch sieben Uhr dreißig!", es: "¿«Media ocho»? ¡Pero si son las siete y media!", category: "😄 Humor", semana: 3 },
+  { id: 66, de: "Noch ein Paar Schuhe? Wirklich?", es: "¿Otro par de zapatos? ¿En serio?", category: "😄 Humor", semana: 3 },
+  { id: 67, de: "Ich habe nur Schokolade gekauft... viel Schokolade.", es: "Solo he comprado chocolate... mucho chocolate.", category: "😄 Humor", semana: 3 },
 ];
 
-const SEMANAS = [1, 2];
+const SEMANAS = [1, 2, 3];
 const CATEGORIES_BY_SEMANA = {
   1: ["Todas", "👋 Saludos", "🍳 Cocina", "✈️ Viajes", "💬 Sentimientos", "😄 Humor"],
   2: ["Todas", "🍳 Cocina", "🌤 Clima", "👨‍👩‍👧 Familia", "🏠 Día a día", "🃏 Comodines", "😄 Humor"],
+  3: ["Todas", "🔢 Números", "🕐 Hora", "🛒 Compras", "😄 Humor"],
 };
 
 function speakText(text, onEnd) {
@@ -299,7 +325,7 @@ function App() {
           <div style={{ display:"flex", gap:"8px", marginBottom:"14px" }}>
             {SEMANAS.map(s => (
               <button key={s} onClick={()=>setSemana(s)} style={{ ...btn(), flex:1, padding:"10px", borderRadius:"14px", border:"1px solid", borderColor:semana===s?"#d4a853":"#2a2040", background:semana===s?"rgba(212,168,83,0.15)":"rgba(255,255,255,0.03)", color:semana===s?"#d4a853":"#7a6a88", fontSize:"13px", fontWeight:semana===s?"600":"400" }}>
-                Semana {s} {s===1?"🌱":"🌿"}
+                Semana {s} {s===1?"🌱":s===2?"🌿":"🌳"}
               </button>
             ))}
           </div>
